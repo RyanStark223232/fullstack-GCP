@@ -70,7 +70,7 @@
         }
 
         async function fetchData() {
-            const response = await fetch('https://data604-project-g3-public.storage.googleapis.com/rec_users.txt', { method: 'GET' });
+            const response = await fetch('https://data604-project-g3-public-free.storage.googleapis.com/rec_users.txt', { method: 'GET' });
             const text = await response.text();
             const items = text.split('\n');
 
