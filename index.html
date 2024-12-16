@@ -21,15 +21,42 @@
 
 <body>
     <section id="section1">
+        <h2>Apache Beam and Dataflow Pipeline</h2>
+
+        <p>Our recommendation system leverages Apache Beam and Dataflow for efficient data processing.</p>
+
+        <p>A simulated streaming source sends data to Pub/Sub every 10 minutes and the pipeline streams it to BigQuery.</p>
+
+        <p>For the detailed implementation, refer to the following notebooks:</p>
+        <ul>
+            <li><a href="html/footprint_data_app_usage.html" target="_blank">App Usage</a></li>
+            <li><a href="html/footprint_data_calls.html" target="_blank">Calls</a></li>
+            <li><a href="html/footprint_data_locations.html" target="_blank">Locatioins</a></li>
+        </ul>
+    </section>
+
+    <section id="section2">
+        <h2>Data Serving</h2>
+
+        <ul>
+            <li><p>BigQuery: Tables are partitioned to minimize query cost and materialized views are created for Dashboard Connection.</p></li>
+            <li><p>Dashboard: Hosted on Looker Studio with cross filtering.</p></li>
+            <li><p>Recommendation System: Simple Collaborative Filtering with Matrix Factorization, new model is rolled out daily with Blue-Green Deployment.</p></li>
+        </ul>
+
+        <a href="html/Cloud_Function.html" target="_blank">Implementation of Backends</a>
+    </section>
+
+    <section id="section3">
         <h2>Embedded Dashboard</h2>
 
         <iframe width="900" height="675" src="https://lookerstudio.google.com/embed/reporting/878143ba-2182-4422-8144-d2328fc25e29/page/tEnnC" frameborder="0" style="border:0" allowfullscreen sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
     </section>
 
-    <section id="section2">
+    <section id="section4">
         <h2>Recommendation System (Daily Updated)</h2>
 
-        <p>Select a user from the dropdown:</p>
+        <p>Select a user (with previous activities) from the dropdown:</p>
         <select id="dropdown">
             <option value="" selected disabled>Select a user</option>
         </select>
@@ -57,11 +84,14 @@
                 const explanation = document.getElementById('explanation');
 
                 recList.innerHTML = '';
-                explanation.textContent = "Most Similar User:" + data.explain;
+                explanation.textContent = "Most Similar User: " + data.explain;
 
+                const headerItem = document.createElement('p');
+                headerItem.textContent = "Recommend New Apps and Predicted Use Time:";
+                recList.appendChild(headerItem);
                 data.rec.forEach(item => {
                     const listItem = document.createElement('li');
-                    listItem.textContent = item[0] + ' - ' + item[1];
+                    listItem.textContent = item[0] + ' - ' + parseFloat(item[1]).toFixed(2) + " min/hour";
                     recList.appendChild(listItem);
                 });
             }).catch(error => {
@@ -85,7 +115,9 @@
                 const option = document.createElement('option');
                 option.text = item.trim();
                 option.value = item.trim();
-                dropdown.appendChild(option);
+                if (option.text.length > 1){
+                    dropdown.appendChild(option);
+                }
             });
         }
         fetchData();
