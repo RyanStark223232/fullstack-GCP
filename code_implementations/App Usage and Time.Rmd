@@ -1,0 +1,94 @@
+---
+title: "App Usage v.s. Time"
+author: "Geoffrey Wong"
+date: "2025-07-28"
+output: html_document
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(coefplot)
+library(lmtest)
+```
+
+# App Usage v.s. Time
+
+## Data Loading
+
+```{r}
+# Set the file path to your CSV file
+file_path <- "app_usage_app_info.csv"
+
+# Read the CSV file
+data <- read.csv(file_path)
+
+# Define the breaks for different time ranges
+breaks <- c(-Inf, 6, 12, 18, 24)
+
+# Labels for the time ranges
+labels <- c("0-5", "6-11", "12-17", "18-23")
+
+# Convert hours column to categorical variable representing different time ranges
+data$hour_range <- cut(data$hour_of_day, breaks = breaks, labels = labels, include.lowest = TRUE)
+
+# Print the first few rows of the data
+head(data)
+```
+## Transformation
+
+```{r}
+# Convert day_of_week, is_weekend, and hour_of_day to factors for correct grouping
+data$day_of_week <- as.factor(data$day_of_week)
+data$is_weekend <- as.factor(data$is_weekend)
+data$hour_range <- as.factor(data$hour_range)
+
+# Group by the specified columns and sum the foreground_time_ms
+result <- data %>%
+  group_by(applicationCategory, is_weekend, hour_range) %>%
+  summarise(n_user_id = n_distinct(user_id))
+
+# Print the resulting data frame
+head(result)
+```
+## Full Model
+```{r}
+# Perform linear regression analysis
+full_model <- lm(n_user_id ~  applicationCategory + is_weekend + hour_range, data = result)
+# Summarize the linear regression model
+summary(full_model)
+```
+```{r}
+coefplot(full_model)
+```
+## Interaction Model
+
+```{r}
+# Perform linear regression analysis
+inter_model <- lm(n_user_id ~  (applicationCategory + is_weekend + hour_range)^2, data = result)
+# Summarize the linear regression model
+summary(inter_model)
+```
+
+***RESULT:*** The cardinality of the interaction model is too high to be interpretted, but at least we can still say there are more user (on an hourly basis) during weekday than weekend, and this is mostly because there is much lower phone usage in the morning (6am to 11am).
+
+## Asssumption Testing for Interaction Model
+
+```{r}
+plot(inter_model, which = 1)
+```
+```{r}
+dwtest(inter_model)
+```
+
+```{r}
+plot(inter_model, which = 3)
+```
+
+```{r}
+qqnorm(resid(inter_model))
+qqline(resid(inter_model))
+```
+
+***RESULT:*** The interaction models passes the Linearity, Independence, Homoscedasticity, and Normality Assumption.
